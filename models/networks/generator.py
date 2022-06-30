@@ -107,64 +107,6 @@ class LGGANGenerator(BaseNetwork):
         self.resnet_blocks9 = resnet_block(256, 3, 1, 1)
         self.resnet_blocks9.weight_init(0, 0.02)
 
-        # self.resnet_blocks10_0 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_0.weight_init(0, 0.02)
-        # self.resnet_blocks10_1 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_1.weight_init(0, 0.02)
-        # self.resnet_blocks10_2 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_2.weight_init(0, 0.02)
-        # self.resnet_blocks10_3 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_3.weight_init(0, 0.02)
-        # self.resnet_blocks10_4 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_4.weight_init(0, 0.02)
-        # self.resnet_blocks10_5 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_5.weight_init(0, 0.02)
-        # self.resnet_blocks10_6 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_6.weight_init(0, 0.02)
-        # self.resnet_blocks10_7 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_7.weight_init(0, 0.02)
-        # self.resnet_blocks10_8 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_8.weight_init(0, 0.02)
-        # self.resnet_blocks10_9 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_9.weight_init(0, 0.02)
-        # self.resnet_blocks10_10 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_10.weight_init(0, 0.02)
-        # self.resnet_blocks10_11 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_11.weight_init(0, 0.02)
-        # self.resnet_blocks10_12 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_12.weight_init(0, 0.02)
-        # self.resnet_blocks10_13 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_13.weight_init(0, 0.02)
-        # self.resnet_blocks10_14 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_14.weight_init(0, 0.02)
-        # self.resnet_blocks10_15 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_15.weight_init(0, 0.02)
-        # self.resnet_blocks10_16 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_16.weight_init(0, 0.02)
-        # self.resnet_blocks10_17 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_17.weight_init(0, 0.02)
-        # self.resnet_blocks10_18 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_18.weight_init(0, 0.02)
-        # self.resnet_blocks10_19 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_19.weight_init(0, 0.02)
-        # self.resnet_blocks10_20 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_20.weight_init(0, 0.02)
-        # self.resnet_blocks10_21 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_21.weight_init(0, 0.02)
-        # self.resnet_blocks10_22 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_22.weight_init(0, 0.02)
-        # self.resnet_blocks10_23 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_23.weight_init(0, 0.02)
-        # self.resnet_blocks10_24 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_24.weight_init(0, 0.02)
-        # self.resnet_blocks10_25 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_25.weight_init(0, 0.02)
-        # self.resnet_blocks10_26 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_26.weight_init(0, 0.02)
-        # self.resnet_blocks10_27 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_27.weight_init(0, 0.02)
-        # self.resnet_blocks10_28 = resnet_block_2(64,3,1,1)
-        # self.resnet_blocks10_28.weight_init(0, 0.02)
 
         if self.opt.use_sau:
             self.deconv3_local = SAU(
@@ -183,7 +125,7 @@ class LGGANGenerator(BaseNetwork):
             self.deconv4_local = nn.ConvTranspose(128, 64, 3, 2, 1, 1)
             self.deconv4_norm_local = nn.InstanceNorm2d(64, affine=False)
 
-        self.deconv9 = nn.Conv2d(3*29, 3, 3, 1, 1)
+        self.deconv9 = nn.Conv2d(3*self.semantic_nc, 3, 3, 1, 1)
 
         self.deconv5_0 = nn.Conv2d(64, 3, 7, 1, 0)
         self.deconv5_1 = nn.Conv2d(64, 3, 7, 1, 0)
@@ -214,15 +156,11 @@ class LGGANGenerator(BaseNetwork):
         self.deconv5_26 = nn.Conv2d(64, 3, 7, 1, 0)
         self.deconv5_27 = nn.Conv2d(64, 3, 7, 1, 0)
         self.deconv5_28 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_29 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_30 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_31 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_32 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_33 = nn.Conv2d(64, 3, 7, 1, 0)
-        # self.deconv5_34 = nn.Conv2d(64, 3, 7, 1, 0)
+
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         # self.fc1 = nn.Linear(64*256 * 512, 512)
+        # TODO ngf ndf修改报错的原因可能在这里，把64给固定住了
         self.fc2 = nn.Linear(64, 29)
 
         if self.opt.use_sau:
@@ -363,75 +301,40 @@ class LGGANGenerator(BaseNetwork):
         feature_26 = x_feature_local * label_64_26
         feature_27 = x_feature_local * label_64_27
         feature_28 = x_feature_local * label_64_28
-        # feature_29 = x_feature_local * label_64_29
-        # feature_30 = x_feature_local * label_64_30
-        # feature_31 = x_feature_local * label_64_31
-        # feature_32 = x_feature_local * label_64_32
-        # feature_33 = x_feature_local * label_64_33
-        # feature_34 = x_feature_local * label_64_34
         # print('before feature:', feature_0.size())
 
-        # feature_0 = self.resnet_blocks10_0(feature_0)
-        # feature_1 = self.resnet_blocks10_1(feature_1)
-        # feature_2 = self.resnet_blocks10_2(feature_2)
-        # feature_3 = self.resnet_blocks10_3(feature_3)
-        # feature_4 = self.resnet_blocks10_4(feature_4)
-        # feature_5 = self.resnet_blocks10_5(feature_5)
-        # feature_6 = self.resnet_blocks10_6(feature_6)
-        # feature_7 = self.resnet_blocks10_7(feature_7)
-        # feature_8 = self.resnet_blocks10_8(feature_8)
-        # feature_9 = self.resnet_blocks10_9(feature_9)
-        # feature_10 = self.resnet_blocks10_10(feature_10)
-        # feature_11 = self.resnet_blocks10_11(feature_11)
-        # feature_12 = self.resnet_blocks10_12(feature_12)
-        # feature_13 = self.resnet_blocks10_13(feature_13)
-        # feature_14 = self.resnet_blocks10_14(feature_14)
-        # feature_15 = self.resnet_blocks10_15(feature_15)
-        # feature_16 = self.resnet_blocks10_16(feature_16)
-        # feature_17 = self.resnet_blocks10_17(feature_17)
-        # feature_18 = self.resnet_blocks10_18(feature_18)
-        # feature_19 = self.resnet_blocks10_19(feature_19)
-        # feature_20 = self.resnet_blocks10_20(feature_20)
-        # feature_21 = self.resnet_blocks10_21(feature_21)
-        # feature_22 = self.resnet_blocks10_22(feature_22)
-        # feature_23 = self.resnet_blocks10_23(feature_23)
-        # feature_24 = self.resnet_blocks10_24(feature_24)
-        # feature_25 = self.resnet_blocks10_25(feature_25)
-        # feature_26 = self.resnet_blocks10_26(feature_26)
-        # feature_27 = self.resnet_blocks10_27(feature_27)
-        # feature_28 = self.resnet_blocks10_28(feature_28)
-
-        # print('after feature:', feature_0.size())
-        # [1, 64, 256, 512]
         feature_combine= jt.concat((feature_0, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8, feature_9, feature_10, feature_11,
                                     feature_12, feature_13, feature_14, feature_15, feature_16, feature_17, feature_18, feature_19,feature_20,feature_21,
                                     feature_22,feature_23, feature_24, feature_25, feature_26,feature_27,feature_28), 0)
         # print(feature_combine.size())
         # [35, 64, 256, 512]
+
         feature_combine = self.avgpool(feature_combine)
         # print(feature_combine.size())
         # [35, 64 , 1, 1]
+
         feature_combine_fc = jt.flatten(feature_combine, 1)
         # print(feature_combine_fc.size())
         # [35, 64]
+        
         feature_score = self.fc2(feature_combine_fc)
         # print(feature_score.size()) [35, 35]
+        
         target= jt.float32([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28])
         # print(target)
         # print(label_0)
         
         # original
-        valid_index = jt.float32([if_all_zero(label_0), if_all_zero(label_1), if_all_zero(label_2),if_all_zero(label_3),if_all_zero(label_4), if_all_zero(label_5),
-                                if_all_zero(label_6), if_all_zero(label_7), if_all_zero(label_8),if_all_zero(label_9),if_all_zero(label_10),if_all_zero(label_11),
-                                if_all_zero(label_12),if_all_zero(label_13),if_all_zero(label_14),if_all_zero(label_15),if_all_zero(label_16),if_all_zero(label_17),
-                                if_all_zero(label_18),if_all_zero(label_19),if_all_zero(label_20),if_all_zero(label_21),if_all_zero(label_22),if_all_zero(label_23),
-                                if_all_zero(label_24),if_all_zero(label_25),if_all_zero(label_26),if_all_zero(label_27),if_all_zero(label_28)])
+        valid_index_orig = jt.concat([if_all_zero_v2(label_0), if_all_zero_v2(label_1), if_all_zero_v2(label_2),if_all_zero_v2(label_3),if_all_zero_v2(label_4), if_all_zero_v2(label_5),
+                                if_all_zero_v2(label_6), if_all_zero_v2(label_7), if_all_zero_v2(label_8),if_all_zero_v2(label_9),if_all_zero_v2(label_10),if_all_zero_v2(label_11),
+                                if_all_zero_v2(label_12),if_all_zero_v2(label_13),if_all_zero_v2(label_14),if_all_zero_v2(label_15),if_all_zero_v2(label_16),if_all_zero_v2(label_17),
+                                if_all_zero_v2(label_18),if_all_zero_v2(label_19),if_all_zero_v2(label_20),if_all_zero_v2(label_21),if_all_zero_v2(label_22),if_all_zero_v2(label_23),
+                                if_all_zero_v2(label_24),if_all_zero_v2(label_25),if_all_zero_v2(label_26),if_all_zero_v2(label_27),if_all_zero_v2(label_28)], dim=1)
         # test
-        # valid_index_v2 = if_all_zero_v2(label)
+        valid_index = if_all_zero_v2(label)
         
         # debug
-        # print(jt.all(valid_index == valid_index_v2))
-
+        print("test if_all_zero v2: ", jt.all(valid_index == valid_index_orig))
 
         # for i in range(self.opt.label_nc):
         #     globals()['feature_' + str(i)] = nn.pad(eval('feature_%d'% (i)), (3, 3, 3, 3), 'reflect') # print(label_1.size())  [1, 64, 262, 518]
@@ -465,17 +368,11 @@ class LGGANGenerator(BaseNetwork):
         feature_26 = nn.pad(feature_26, (3, 3, 3, 3), 'reflect')
         feature_27 = nn.pad(feature_27, (3, 3, 3, 3), 'reflect')
         feature_28 = nn.pad(feature_28, (3, 3, 3, 3), 'reflect')
-        # feature_29 = nn.pad(feature_29, (3, 3, 3, 3), 'reflect')
-        # feature_30 = nn.pad(feature_30, (3, 3, 3, 3), 'reflect')
-        # feature_31 = nn.pad(feature_31, (3, 3, 3, 3), 'reflect')
-        # feature_32 = nn.pad(feature_32, (3, 3, 3, 3), 'reflect')
-        # feature_33 = nn.pad(feature_33, (3, 3, 3, 3), 'reflect')
-        # feature_34 = nn.pad(feature_34, (3, 3, 3, 3), 'reflect')
 
-
-        result_0 = jt.tanh(self.deconv5_0(feature_0)) # print(result_1.size()) [1, 3, 256, 512]
+        result_0 = jt.tanh(self.deconv5_0(feature_0)) 
         # print(result_0.size())
         result_1 = jt.tanh(self.deconv5_1(feature_1))
+        # print(result_1.size()) [1, 3, 256, 512]
         result_2 = jt.tanh(self.deconv5_2(feature_2))
         result_3 = jt.tanh(self.deconv5_3(feature_3))
         result_4 = jt.tanh(self.deconv5_4(feature_4))
@@ -514,7 +411,7 @@ class LGGANGenerator(BaseNetwork):
                                    result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ), 1)
         result_local = jt.tanh(self.deconv9(combine_local))
 
-        # print(result_local.size()) [1, 3, 262, 518]
+        # print(result_local.size()) [1, 3, 262, 518]（此处应该是[1,3,256,512]，要与result_global保持一致）
         # print(result_global.size()) [1, 3, 256, 512]
         # final = (result_global + result_local) * 0.5
 
@@ -541,11 +438,16 @@ class LGGANGenerator(BaseNetwork):
         # final = (result_global + result_local) * 0.5
 
 
-        return final, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
-               label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
-               label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_26, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
-               result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28, feature_score, target, valid_index.float(), attention_global, attention_local
+        return final, result_global, result_local, \
+                label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
+                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, \
+                label_3_18, label_3_19, label_3_20, label_3_21, label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, \
+                label_3_26, label_3_28, \
+                result_0, result_1, result_2, result_3, result_4, result_5,result_6,result_7, result_8, result_9, result_10, \
+                result_11, result_12, result_13, result_14, result_15, result_16, result_17, result_18, result_19, result_20, \
+                result_21, result_22, result_23, result_24, result_25, result_26, result_27 , result_28, \
+                feature_score, target, valid_index, \
+                attention_global, attention_local
 
 
 # resnet block with reflect padding
@@ -575,6 +477,9 @@ class resnet_block(nn.Module):
         x = self.conv2_norm(self.conv2(x))
 
         return input + x
+
+
+# resnet block with reflect padding (with only **one** conv)
 class resnet_block_2(nn.Module):
     def __init__(self, channel, kernel, stride, padding):
         super(resnet_block_2, self).__init__()

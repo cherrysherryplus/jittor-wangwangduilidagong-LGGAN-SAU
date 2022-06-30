@@ -188,21 +188,18 @@ class Pix2PixModel(jt.nn.Module):
                               self.criterionL1(result_local, real_image) * self.opt.lambda_l1
 
         if not self.opt.no_class_loss:
-            # print(self.criterionCE(feature_score, target))
-            # print(index.type()) torch.cuda.LongTensor
-            # print(self.criterionCE(feature_score, target) * index)
-            # print(torch.sum(self.criterionCE(feature_score, target) * index))
-            # print(torch.sum(index))
-            # print(torch.sum(self.criterionCE(feature_score, target) * index)/torch.sum(index))
-            # ce_weight  = jt.float32([1, 1, 1, 1, 2, 5, 1, 1, 1, 1, 1, 5, 1, 1, 10, 5, 2, 2, 5, 5, 1, 5, 5, 5, 5, 5, 5, 5, 1])
-            # G_losses['class'] = jt.sum(self.criterionCE(feature_score, target, reduction='none') * index) / jt.sum(index) * self.opt.lambda_class
+            # 下面两行是针对jittor添加的。jittor的ce loss在计算时，c代表的是类别数
+            # output不能输入[b,c,h]的，只能输入[b,c]和[b,c,h,w]的。
+            # target不能输入[b,h]的，只能输入[b,]和[b,h,w]的，
+            # 如果target为类别索引，取值只能在[0,c-1]范围内，否则类别概率则在[0,1]范围内。
+            # 具体可以看torch.nn.CrossEntropyLoss的文档和jt.nn.cross_entropy_loss的源码
             target_ = target.repeat([self.opt.batchSize, 1]).unsqueeze(-1)
             feature_score_ = feature_score.view((self.opt.batchSize, self.opt.semantic_nc, -1, 1))
-            # 下面这行代码会出问题，导致class损失计算高好几个数量级
-            G_losses['class'] = jt.sum(self.criterionCE(feature_score_, target_, reduction='none') * index) / jt.sum(index) * self.opt.lambda_class
-        # print(self.criterionCE(feature_score, target).size())
+            # 下面这行代码会出问题。不加squeeze(-1)会导致class损失计算结果比正常高几个数量级
+            G_losses['class'] = jt.sum(self.criterionCE(feature_score_, target_, reduction='none').squeeze(-1) \
+                                * index) / jt.sum(index) * self.opt.lambda_class
 
-        # TO DO: local pixel loss
+        # TODO: local pixel loss
         if not self.opt.no_l1_local_loss:
             real_image = real_image
             real_0 = real_image * label_3_0
@@ -234,12 +231,6 @@ class Pix2PixModel(jt.nn.Module):
             real_26 = real_image * label_3_26
             real_27 = real_image * label_3_27
             real_28 = real_image * label_3_28
-            # real_29 = real_image * label_3_29
-            # real_30 = real_image * label_3_30
-            # real_31 = real_image * label_3_31
-            # real_32 = real_image * label_3_32
-            # real_33 = real_image * label_3_33
-            # real_34 = real_image * label_3_34
 
             G_losses['L1_Local'] = self.opt.lambda_l1 * ( self.criterionL1(result_0, real_0) + \
                               self.criterionL1(result_1, real_1) + self.criterionL1(result_2, real_2) + \
@@ -258,20 +249,18 @@ class Pix2PixModel(jt.nn.Module):
                               self.criterionL1(result_27, real_27) + self.criterionL1(result_28, real_28) )
 
         return G_losses, fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
-               label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
-               label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
-               result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ,feature_score, target, index, attention_global, attention_local
-        # return G_losses, fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
-        #        label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
-        #        label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28, label_3_29, label_3_30, label_3_31, \
-        #        label_3_32, label_3_33, label_3_34, result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
-        #        result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-        #        result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , result_29 , result_30, \
-        #        result_31 , result_32 , result_33 , result_34,feature_score, target, index, attention_global, attention_local
+                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
+                label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  \
+                result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
+                result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
+                result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , \
+                feature_score, target, index, \
+                attention_global, attention_local
+
 
     def compute_discriminator_loss(self, input_semantics, real_image):
         D_losses = {}
+
         with jt.no_grad():
             fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
@@ -280,8 +269,6 @@ class Pix2PixModel(jt.nn.Module):
                result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
                result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ,  \
                feature_score, target, valid_index, attention_global, attention_local, _ = self.generate_fake(input_semantics, real_image)
-            # fake_image = fake_image.detach()
-            # fake_image.requires_grad()
 
         pred_fake_generated, pred_real_generated = self.discriminate(input_semantics, fake_image, real_image)
         pred_fake_global, pred_real_global = self.discriminate(input_semantics, result_global, real_image)
@@ -310,10 +297,10 @@ class Pix2PixModel(jt.nn.Module):
                 KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
 
         fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
-               label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
-               label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
-               result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ,  feature_score, target, index, attention_global, attention_local = self.netG(input_semantics, z=z)
+        label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
+        label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
+        result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
+        result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ,  feature_score, target, index, attention_global, attention_local = self.netG(input_semantics, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"
@@ -375,3 +362,4 @@ class Pix2PixModel(jt.nn.Module):
 
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0
+
