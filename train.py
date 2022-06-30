@@ -92,22 +92,24 @@ for epoch in iter_counter.training_epochs():
         if iter_counter.needs_saving():
             is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
             if is_better:
-                print(f"find currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
-                print('saving the latest model (epoch %d, total_steps %d)' %
-                    (epoch, iter_counter.total_steps_so_far))
-                trainer.save('latest')
-                iter_counter.record_current_iter()
+                print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+                trainer.save('best')
+                iter_counter.record_best_iter()
+            print('saving the latest model (epoch %d, total_steps %d)' % (epoch, iter_counter.total_steps_so_far))
+            trainer.save('latest')
+            iter_counter.record_current_iter()
 
     trainer.update_learning_rate(epoch)
     iter_counter.record_epoch_end()
 
-    if epoch % opt.save_epoch_freq == 0 or \
-       epoch == iter_counter.total_epochs:
+    if epoch % opt.save_epoch_freq == 0 or epoch == iter_counter.total_epochs:
         is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
         if is_better:
-            print('saving the model at the end of epoch %d, iters %d' %
-                (epoch, iter_counter.total_steps_so_far))
-            trainer.save('latest')
+            print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+            trainer.save('best')
+            iter_counter.record_best_iter()
+        print('saving the model at the end of epoch %d, iters %d' % (epoch, iter_counter.total_steps_so_far))
+        trainer.save('latest')
         trainer.save(epoch)
     
     jt.sync_all()
@@ -115,3 +117,4 @@ for epoch in iter_counter.training_epochs():
     
 
 print('Training was successfully finished.')
+
