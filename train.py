@@ -21,11 +21,14 @@ opt = TrainOptions().parse()
 # global seed
 fix_seed(seed = 628)
 
-# debug
+# debug 
+# opt.display_freq = 5
 # opt.use_sau = True
+# opt.batchSize = 2
 # jt.flags.lazy_execution = 0
 
-# opt.continue_train = True   # if continue train
+# if continue train
+# opt.continue_train = True
 
 jt.flags.use_cuda = (jt.has_cuda and opt.gpu_ids != "-1")
 # print options to help debugging
@@ -43,8 +46,9 @@ print("the Dataset is contain %d labels" %(len(dataloader)))
 # load FID val dataset
 
 data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
-# data_val.initialize(opt)
 fid_test = fid_jittor(opt, data_val)
+
+# data_val.initialize(opt)
 
 # create trainer for our model
 trainer = Pix2PixTrainer(opt)
@@ -72,6 +76,10 @@ for epoch in iter_counter.training_epochs():
         start_grad(trainer.pix2pix_model.netD)
         trainer.run_discriminator_one_step(data_i)
 
+        # EMA update
+        if not opt.no_EMA:
+            trainer.update_EMA(iter_counter, dataloader)
+
         # Visualizations
         if iter_counter.needs_printing():
             losses = trainer.get_latest_losses()
@@ -80,8 +88,22 @@ for epoch in iter_counter.training_epochs():
             visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_displaying():
+            # 每次输出时才计算一次netEMA的生成结果
+            with jt.no_grad():
+                input_semantics, real_image = trainer.pix2pix_model.preprocess_input(data_i)
+                synthesized_image_ema = trainer.pix2pix_model.generate_fake(
+                                        input_semantics, real_image, \
+                                        compute_kld_loss=trainer.opt.use_vae, \
+                                        mode="inference")[0]
+            # 删除globals中不再用到的全局变量
+            # for i in range(trainer.opt.label_nc):
+            #     del globals()['label_' + str(i)]
+            #     del globals()['label_3_' + str(i)]
+            #     del globals()['label_64_' + str(i)]
+
             visuals = OrderedDict([('input_label', data_i['label']),
                                    ('synthesized_image', trainer.get_latest_generated()),
+                                   ('synthesized_image_ema', synthesized_image_ema),
                                    ('global_image', trainer.get_global_generated()),
                                    ('local_image', trainer.get_local_generated()),
                                    ('global_attention', trainer.get_global_attention()),
@@ -90,11 +112,11 @@ for epoch in iter_counter.training_epochs():
             visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_saving():
-            is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+            is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
             if is_better:
                 print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
                 trainer.save('best')
-                iter_counter.record_best_iter()
+                iter_counter.record_best_iter(cur_fid)
             print('saving the latest model (epoch %d, total_steps %d)' % (epoch, iter_counter.total_steps_so_far))
             trainer.save('latest')
             iter_counter.record_current_iter()
@@ -103,11 +125,11 @@ for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_end()
 
     if epoch % opt.save_epoch_freq == 0 or epoch == iter_counter.total_epochs:
-        is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+        is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
         if is_better:
             print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
             trainer.save('best')
-            iter_counter.record_best_iter()
+            iter_counter.record_best_iter(cur_fid)
         print('saving the model at the end of epoch %d, iters %d' % (epoch, iter_counter.total_steps_so_far))
         trainer.save('latest')
         trainer.save(epoch)
@@ -115,6 +137,17 @@ for epoch in iter_counter.training_epochs():
     jt.sync_all()
     jt.gc()
     
+# after training
+trainer.update_EMA(iter_counter, dataloader, force_run_stats=True)
+is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+if is_better:
+    print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+    trainer.save('best')
+    iter_counter.record_best_iter(cur_fid)
+print('saving the model at the end of epoch %d, iters %d' % (epoch, iter_counter.total_steps_so_far))
+trainer.save('latest')
+trainer.save(epoch)
 
+# training end
 print('Training was successfully finished.')
 

@@ -3,6 +3,7 @@ Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
 Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 """
 
+import jittor as jt
 from models.pix2pix_model import Pix2PixModel
 
 
@@ -189,3 +190,33 @@ class Pix2PixTrainer():
                 param_group['lr'] = new_lr_G
             print('update learning rate: %f -> %f' % (self.old_lr, new_lr))
             self.old_lr = new_lr
+
+
+    def update_EMA(self, iter_counter, dataloader, force_run_stats=False):
+        # update weights based on new generator weights
+        cur_epoch = iter_counter.current_epoch
+        cur_iter = iter_counter.total_steps_so_far
+        with jt.no_grad():
+            state_EMA = self.pix2pix_model.netEMA.state_dict()
+            state_G = self.pix2pix_model.netG.state_dict()
+            for key in state_EMA:
+                state_EMA[key].assign(
+                    state_EMA[key] * self.opt.EMA_decay +
+                    state_G[key]   * (1 - self.opt.EMA_decay)
+                )
+        # collect running stats for batchnorm before FID computation, image or network saving
+        condition_run_stats = (force_run_stats or
+                            cur_iter % self.opt.collect_running_stats_freq == 0 or
+                            cur_iter % self.opt.save_latest_freq == 0 or
+                            cur_epoch % self.opt.save_epoch_freq == 0
+                            )
+        if condition_run_stats:
+            with jt.no_grad():
+                num_upd = 0
+                for _, data in enumerate(dataloader):
+                    label, _ = self.pix2pix_model.preprocess_input(data)
+                    _ = self.pix2pix_model.module.netEMA(label)
+                    num_upd += 1
+                    if num_upd > 50:
+                        break
+

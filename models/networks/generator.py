@@ -6,7 +6,6 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 import jittor as jt
 from jittor import init
 import jittor.nn as nn
-# import torch.nn.functional as F
 from models.networks.base_network import BaseNetwork
 from models.networks.normalization import get_nonspade_norm_layer
 from models.networks.architecture import ResnetBlock as ResnetBlock
@@ -27,7 +26,7 @@ def if_all_zero_v2(tensor):
     b,_,_,_ = tensor.shape
     # dim=(2,3)对h w求和，相当于每个类单独处理，如果channels>1的话
     # view(b,-1)，因为sum已经对h w求和，所以剩余的维度只有channels了，-1会被替换为channels
-    return tensor.sum(dim=(2,3)).clamp(0., 1.).view(b, -1)
+    return tensor.sum(dims=(2,3)).clamp(0., 1.).view(b, -1)
 
 
 class LGGANGenerator(BaseNetwork):
@@ -125,7 +124,7 @@ class LGGANGenerator(BaseNetwork):
             self.deconv4_local = nn.ConvTranspose(128, 64, 3, 2, 1, 1)
             self.deconv4_norm_local = nn.InstanceNorm2d(64, affine=False)
 
-        self.deconv9 = nn.Conv2d(3*self.semantic_nc, 3, 3, 1, 1)
+        self.deconv9 = nn.Conv2d(3*self.opt.semantic_nc, 3, 3, 1, 1)
 
         self.deconv5_0 = nn.Conv2d(64, 3, 7, 1, 0)
         self.deconv5_1 = nn.Conv2d(64, 3, 7, 1, 0)
@@ -323,18 +322,17 @@ class LGGANGenerator(BaseNetwork):
         target= jt.float32([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28])
         # print(target)
         # print(label_0)
-        
-        # original
-        valid_index_orig = jt.concat([if_all_zero_v2(label_0), if_all_zero_v2(label_1), if_all_zero_v2(label_2),if_all_zero_v2(label_3),if_all_zero_v2(label_4), if_all_zero_v2(label_5),
-                                if_all_zero_v2(label_6), if_all_zero_v2(label_7), if_all_zero_v2(label_8),if_all_zero_v2(label_9),if_all_zero_v2(label_10),if_all_zero_v2(label_11),
-                                if_all_zero_v2(label_12),if_all_zero_v2(label_13),if_all_zero_v2(label_14),if_all_zero_v2(label_15),if_all_zero_v2(label_16),if_all_zero_v2(label_17),
-                                if_all_zero_v2(label_18),if_all_zero_v2(label_19),if_all_zero_v2(label_20),if_all_zero_v2(label_21),if_all_zero_v2(label_22),if_all_zero_v2(label_23),
-                                if_all_zero_v2(label_24),if_all_zero_v2(label_25),if_all_zero_v2(label_26),if_all_zero_v2(label_27),if_all_zero_v2(label_28)], dim=1)
-        # test
         valid_index = if_all_zero_v2(label)
+
+        # original
+        # valid_index_orig = jt.concat([if_all_zero_v2(label_0), if_all_zero_v2(label_1), if_all_zero_v2(label_2),if_all_zero_v2(label_3),if_all_zero_v2(label_4), if_all_zero_v2(label_5),
+        #                         if_all_zero_v2(label_6), if_all_zero_v2(label_7), if_all_zero_v2(label_8),if_all_zero_v2(label_9),if_all_zero_v2(label_10),if_all_zero_v2(label_11),
+        #                         if_all_zero_v2(label_12),if_all_zero_v2(label_13),if_all_zero_v2(label_14),if_all_zero_v2(label_15),if_all_zero_v2(label_16),if_all_zero_v2(label_17),
+        #                         if_all_zero_v2(label_18),if_all_zero_v2(label_19),if_all_zero_v2(label_20),if_all_zero_v2(label_21),if_all_zero_v2(label_22),if_all_zero_v2(label_23),
+        #                         if_all_zero_v2(label_24),if_all_zero_v2(label_25),if_all_zero_v2(label_26),if_all_zero_v2(label_27),if_all_zero_v2(label_28)], dim=1)        
         
-        # debug
-        print("test if_all_zero v2: ", jt.all(valid_index == valid_index_orig))
+        # debug True
+        # print("test if_all_zero v2: ", jt.all(valid_index == valid_index_orig))
 
         # for i in range(self.opt.label_nc):
         #     globals()['feature_' + str(i)] = nn.pad(eval('feature_%d'% (i)), (3, 3, 3, 3), 'reflect') # print(label_1.size())  [1, 64, 262, 518]

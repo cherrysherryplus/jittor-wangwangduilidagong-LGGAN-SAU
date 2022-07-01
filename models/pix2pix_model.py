@@ -4,7 +4,9 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 """
 
 import jittor as jt
+import copy
 import models.networks as networks
+from models.networks import loss
 import util.util as util
 
 
@@ -18,7 +20,7 @@ class Pix2PixModel(jt.nn.Module):
         super().__init__()
         self.opt = opt
 
-        self.netG, self.netD, self.netE = self.initialize_networks(opt)
+        self.netG, self.netD, self.netE, self.netEMA = self.initialize_networks(opt)
 
         # set loss functions
         if opt.isTrain:
@@ -28,6 +30,8 @@ class Pix2PixModel(jt.nn.Module):
             self.criterionCE = jt.nn.cross_entropy_loss
             if not opt.no_vgg_loss:
                 self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
+            if not opt.no_tv_loss:
+                self.criterionTV = loss.TVLoss()
             if opt.use_vae:
                 self.KLDLoss = networks.KLDLoss()
 
@@ -64,7 +68,7 @@ class Pix2PixModel(jt.nn.Module):
                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
                label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28, result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
                result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , feature_score, target, index,  attention_global, attention_local, _ = self.generate_fake(input_semantics, real_image)
+               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , feature_score, target, index,  attention_global, attention_local, _ = self.generate_fake(input_semantics, real_image, mode=mode)
             return fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
                label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
@@ -95,6 +99,8 @@ class Pix2PixModel(jt.nn.Module):
     def save(self, epoch):
         util.save_network(self.netG, 'G', epoch, self.opt)
         util.save_network(self.netD, 'D', epoch, self.opt)
+        if not self.opt.no_EMA:
+            util.save_network(self.netEMA, 'EMA', epoch, self.opt)
         if self.opt.use_vae:
             util.save_network(self.netE, 'E', epoch, self.opt)
 
@@ -106,15 +112,27 @@ class Pix2PixModel(jt.nn.Module):
         netG = networks.define_G(opt)
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
+        #--- EMA of generator weights ---
+        with jt.no_grad():
+            netEMA = copy.deepcopy(netG) if not opt.no_EMA else None
 
         if not opt.isTrain or opt.continue_train:
-            netG = util.load_network(netG, 'G', opt.which_epoch, opt)
+            if not opt.isTrain:
+                if self.opt.no_EMA:
+                    netG = util.load_network(netG, 'G', opt.which_epoch, opt)
+                else:
+                    netEMA = util.load_network(netEMA, 'EMA', opt.which_epoch, opt)
+            else:
+                netG = util.load_network(netG, 'G', opt.which_epoch, opt)
+                if not opt.not_EMA:
+                    netEMA = util.load_network(netEMA, 'EMA', opt.which_epoch, opt)
             if opt.isTrain:
                 netD = util.load_network(netD, 'D', opt.which_epoch, opt)
             if opt.use_vae:
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
 
-        return netG, netD, netE
+        return netG, netD, netE, netEMA
+        
 
     # preprocess the input, such as moving the tensors to GPUs and
     # transforming the label map to one-hot encoding
@@ -163,6 +181,13 @@ class Pix2PixModel(jt.nn.Module):
         G_losses['GAN'] = self.criterionGAN(pred_fake_generated, True, for_discriminator=False) + \
                           self.criterionGAN(pred_fake_global, True, for_discriminator=False) + \
                           self.criterionGAN(pred_fake_local, True, for_discriminator=False)
+
+        if not self.opt.no_tv_loss:
+            # result_1 result_2等后续可以尝试加上
+            G_losses['TV'] = self.criterionTV(fake_image) + \
+                             self.criterionTV(result_global) + \
+                             self.criterionTV(result_local)
+            G_losses['TV'] *= self.opt.lambda_tv
 
         if not self.opt.no_ganFeat_loss:
             num_D = len(pred_fake_generated) # print(num_D) 2
@@ -288,7 +313,7 @@ class Pix2PixModel(jt.nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
-    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
+    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False, mode="train"):
         z = None
         KLD_loss = None
         if self.opt.use_vae:
@@ -298,9 +323,15 @@ class Pix2PixModel(jt.nn.Module):
 
         fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
         label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
-        label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
-        result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-        result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ,  feature_score, target, index, attention_global, attention_local = self.netG(input_semantics, z=z)
+        label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  \
+        result_0, result_1, result_2, result_3, result_4, result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , result_11 ,result_12 , result_13 ,\
+        result_14 , result_15 , result_16 , result_17, result_18 , result_19 , result_20, result_21 , result_22 , result_23 , result_24 , result_25 , result_26, \
+        result_27 , result_28, \
+        feature_score, target, index, \
+        attention_global, attention_local = \
+            self.netG(input_semantics, z=z) if mode=="train" \
+            else \
+            self.netEMA(input_semantics, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"

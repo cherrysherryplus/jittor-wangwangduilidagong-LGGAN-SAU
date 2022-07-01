@@ -47,17 +47,19 @@ class fid_jittor():
                 pool += [pool_val]
         return jt.concat(pool, 0)
 
-    def compute_fid_with_valid_path(self, netG):
+    def compute_fid_with_valid_path(self, netG, netEMA):
         pool, logits, labels = [], [], []
         self.model_inc.eval()
         netG.eval()
+        if not self.opt.no_EMA:
+            netEMA.eval()
         with jt.no_grad():
             for i, data_i in enumerate(self.val_dataloader):
                 label = util.preprocess_input(data_i)
-                # if self.opt.no_EMA:
-                generated = netG(label)[0]
-                # else:
-                #     generated = netEMA(label)
+                if self.opt.no_EMA:
+                    generated = netG(label)[0]
+                else:
+                    generated = netEMA(label)[0]
                 generated = (generated + 1) / 2
                 pool_val = self.model_inc(generated.float32())[0][:, :, 0, 0]
                 pool += [pool_val]
@@ -65,8 +67,8 @@ class fid_jittor():
             mu, sigma = jt.mean(pool, 0), jittor_cov(pool, rowvar=False)
             answer = self.numpy_calculate_frechet_distance(self.m1, self.s1, mu, sigma)
         netG.train()
-        # if not self.opt.no_EMA:
-        #     netEMA.train()
+        if not self.opt.no_EMA:
+            netEMA.train()
         return answer
 
     def numpy_calculate_frechet_distance(self, mu1, sigma1, mu2, sigma2, eps=1e-6):
@@ -128,7 +130,7 @@ class fid_jittor():
 
     def update(self, model, cur_iter):
         print("--- Iter %s: computing FID ---" % (cur_iter))
-        cur_fid = self.compute_fid_with_valid_path(model.netG)
+        cur_fid = self.compute_fid_with_valid_path(model.netG, model.netEMA)
         self.update_logs(cur_fid, cur_iter)
         print("--- FID at Iter %s: " % cur_iter, "{:.2f}".format(cur_fid))
         if cur_fid < self.best_fid:
@@ -136,7 +138,7 @@ class fid_jittor():
             is_best = True
         else:
             is_best = False
-        return is_best
+        return is_best, cur_fid
 
     def update_logs(self, cur_fid, epoch):
         try :

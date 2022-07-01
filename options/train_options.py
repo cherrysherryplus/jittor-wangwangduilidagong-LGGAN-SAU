@@ -12,8 +12,10 @@ class TrainOptions(BaseOptions):
         # for displays
         parser.add_argument('--display_freq', type=int, default=200, help='frequency of showing training results on screen')
         parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
+        parser.add_argument('--collect_running_stats_freq', type=int, default=1000, help='frequency of collect running stats of netEMA')
         parser.add_argument('--save_latest_freq', type=int, default=5000, help='frequency of saving the latest results')
         parser.add_argument('--save_epoch_freq', type=int, default=10, help='frequency of saving checkpoints at the end of epochs')
+        
         parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results to [opt.checkpoints_dir]/[opt.name]/web/')
         parser.add_argument('--debug', action='store_true', help='only do one epoch and displays at each iteration')
         parser.add_argument('--tf_log', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')
@@ -30,23 +32,27 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--beta2', type=float, default=0.999, help='momentum term of adam')
         parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate for adam')
         parser.add_argument('--D_steps_per_G', type=int, default=1, help='number of discriminator iterations per generator iterations.')
-
-        # for discriminators
-        parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')
         
         parser.add_argument('--lambda_feat', type=float, default=10.0, help='weight for feature matching loss')
         parser.add_argument('--lambda_vgg', type=float, default=5.0, help='weight for vgg loss')
         parser.add_argument('--lambda_l1', type=float, default=1.0, help='weight for pixel loss')
         parser.add_argument('--lambda_class', type=float, default=5.0, help='weight for classification loss')
+        parser.add_argument('--lambda_tv', type=float, default=5.0, help='weight for TV loss')
+        parser.add_argument('--lambda_kld', type=float, default=0.05)
         
         parser.add_argument('--no_l1_loss', action='store_true', help='if specified, do *not* use pixel loss')
         parser.add_argument('--no_l1_local_loss', action='store_true', help='if specified, do *not* use local pixel loss')
         parser.add_argument('--no_class_loss', action='store_true', help='if specified, do *not* use classification loss')
         parser.add_argument('--no_ganFeat_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')
         parser.add_argument('--no_vgg_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')
+        parser.add_argument('--no_tv_loss', action='store_true', help='if specified, do *not* use total variation loss')
+        
         parser.add_argument('--gan_mode', type=str, default='hinge', help='(ls|original|hinge)')
-        parser.add_argument('--netD', type=str, default='multiscale', help='(n_layers|multiscale|image)')
         parser.add_argument('--no_TTUR', action='store_true', help='Use TTUR training scheme')
-        parser.add_argument('--lambda_kld', type=float, default=0.05)
+        
+        # EMA
+        parser.add_argument('--no_EMA', action='store_true', help='if specified, do *not* compute exponential moving averages')
+        parser.add_argument('--EMA_decay', type=float, default=0.9999, help='decay in exponential moving averages')
+        
         self.isTrain = True
         return parser

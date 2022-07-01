@@ -65,8 +65,8 @@ class IterationCounter():
                    delimiter=',', fmt='%d')
         print('Saved current iteration count at %s.' % self.iter_record_path)
 
-    def record_best_iter(self):
-        np.savetxt(self.best_iter_record_path, (self.current_epoch, self.epoch_iter),
+    def record_best_iter(self, fid_score):
+        np.savetxt(self.best_iter_record_path, (self.current_epoch, self.epoch_iter, fid_score),
                    delimiter=',', fmt='%d')
         print('Saved best iteration count at %s.' % self.best_iter_record_path)
 

@@ -44,7 +44,7 @@ class FidDataset(Dataset):
         label_dir = './datasets/landscape/val/labels'
         label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
 
-        image_dir = './datasets/landscape/train/imgs'
+        image_dir = './datasets/landscape/val/imgs'
         image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
 
         # if len(opt.instance_dir) > 0:

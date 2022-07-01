@@ -61,6 +61,10 @@ class BaseOptions():
                             help="dimension of the latent z vector")
         parser.add_argument('--use_sau', action='store_true', help='use sau model')
 
+        # for discriminators
+        parser.add_argument('--netD', type=str, default='multiscale', help='(n_layers|multiscale|image)')
+        parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')
+
         # for instance-wise features
         parser.add_argument('--no_instance', type=bool, default=True, help='if specified, do *not* add instance map as input')
         parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')
