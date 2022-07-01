@@ -45,8 +45,8 @@ print("the Dataset is contain %d labels" %(len(dataloader)))
 
 # load FID val dataset
 
-data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
-fid_test = fid_jittor(opt, data_val)
+# data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
+# fid_test = fid_jittor(opt, data_val)
 
 # data_val.initialize(opt)
 
@@ -88,27 +88,22 @@ for epoch in iter_counter.training_epochs():
             visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_displaying():
-            # 每次输出时才计算一次netEMA的生成结果
-            with jt.no_grad():
-                input_semantics, real_image = trainer.pix2pix_model.preprocess_input(data_i)
-                synthesized_image_ema = trainer.pix2pix_model.generate_fake(
-                                        input_semantics, real_image, \
-                                        compute_kld_loss=trainer.opt.use_vae, \
-                                        mode="inference")[0]
-            # 删除globals中不再用到的全局变量
-            # for i in range(trainer.opt.label_nc):
-            #     del globals()['label_' + str(i)]
-            #     del globals()['label_3_' + str(i)]
-            #     del globals()['label_64_' + str(i)]
-
             visuals = OrderedDict([('input_label', data_i['label']),
                                    ('synthesized_image', trainer.get_latest_generated()),
-                                   ('synthesized_image_ema', synthesized_image_ema),
                                    ('global_image', trainer.get_global_generated()),
                                    ('local_image', trainer.get_local_generated()),
                                    ('global_attention', trainer.get_global_attention()),
                                    ('local_attention', trainer.get_local_attention()),
                                    ('real_image', data_i['image'])])
+            if not opt.no_EMA:
+            # 每次输出时才计算一次netEMA的生成结果
+                with jt.no_grad():
+                    input_semantics, real_image = trainer.pix2pix_model.preprocess_input(data_i)
+                    synthesized_image_ema = trainer.pix2pix_model.generate_fake(
+                                            input_semantics, real_image, \
+                                            compute_kld_loss=trainer.opt.use_vae, \
+                                            mode="inference")[0]
+                visuals["synthesized_image_ema"] = synthesized_image_ema
             visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_saving():
@@ -138,7 +133,8 @@ for epoch in iter_counter.training_epochs():
     jt.gc()
     
 # after training
-trainer.update_EMA(iter_counter, dataloader, force_run_stats=True)
+if not opt.no_EMA:
+    trainer.update_EMA(iter_counter, dataloader, force_run_stats=True)
 is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
 if is_better:
     print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")

@@ -1,5 +1,6 @@
 python train.py \
 --nThreads 2 \
+--batchSize 2 \
 --use_sau \
 --lambda_feat 8.0 \
 --lambda_vgg 3.0 \
@@ -7,5 +8,4 @@ python train.py \
 --lambda_class 5.0 \
 --lambda_tv 4.0 \
 --EMA_decay 0.98 \
---display_freq 200
-
+--no_EMA
