@@ -4,6 +4,8 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 """
 
 import sys
+from pathlib import Path
+import numpy as np
 from collections import OrderedDict
 from options.train_options import TrainOptions
 import data
@@ -41,14 +43,23 @@ dataloader = dataset().set_attrs(batch_size=opt.batchSize,
         num_workers=int(opt.nThreads),
         drop_last=opt.isTrain)
 dataloader.initialize(opt)
-print("the Dataset is contain %d labels" %(len(dataloader)))
+print("the Dataset contains %d labels" %(len(dataloader)))
+
 
 # load FID val dataset
-
-# data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
-# fid_test = fid_jittor(opt, data_val)
-
+data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
 # data_val.initialize(opt)
+
+best_fid = 99999999
+if opt.continue_train:
+    txt_path = f"checkpoints/{opt.name}/best_iter.txt"
+    try:
+        best_epoch, best_iter, best_fid = np.loadtxt(txt_path, delimiter=',', dtype=int)
+        print('Load cur_fid (approx: %d) from epoch %d at iteration %d' % (best_fid, best_epoch, best_iter))
+    except:
+        print(f'Could not load best fid record at {txt_path}')
+fid_test = fid_jittor(opt, data_val, best_fid)
+
 
 # create trainer for our model
 trainer = Pix2PixTrainer(opt)
@@ -76,10 +87,6 @@ for epoch in iter_counter.training_epochs():
         start_grad(trainer.pix2pix_model.netD)
         trainer.run_discriminator_one_step(data_i)
 
-        # EMA update
-        if not opt.no_EMA:
-            trainer.update_EMA(iter_counter, dataloader)
-
         # Visualizations
         if iter_counter.needs_printing():
             losses = trainer.get_latest_losses()
@@ -95,15 +102,7 @@ for epoch in iter_counter.training_epochs():
                                    ('global_attention', trainer.get_global_attention()),
                                    ('local_attention', trainer.get_local_attention()),
                                    ('real_image', data_i['image'])])
-            if not opt.no_EMA:
-            # 每次输出时才计算一次netEMA的生成结果
-                with jt.no_grad():
-                    input_semantics, real_image = trainer.pix2pix_model.preprocess_input(data_i)
-                    synthesized_image_ema = trainer.pix2pix_model.generate_fake(
-                                            input_semantics, real_image, \
-                                            compute_kld_loss=trainer.opt.use_vae, \
-                                            mode="inference")[0]
-                visuals["synthesized_image_ema"] = synthesized_image_ema
+
             visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_saving():
@@ -133,8 +132,6 @@ for epoch in iter_counter.training_epochs():
     jt.gc()
     
 # after training
-if not opt.no_EMA:
-    trainer.update_EMA(iter_counter, dataloader, force_run_stats=True)
 is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
 if is_better:
     print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")

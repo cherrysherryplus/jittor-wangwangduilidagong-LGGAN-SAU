@@ -1,5 +1,5 @@
 python train.py \
---nThreads 2 \
+--nThreads 4 \
 --batchSize 2 \
 --use_sau \
 --lambda_feat 8.0 \
@@ -7,5 +7,7 @@ python train.py \
 --lambda_l1 2.0 \
 --lambda_class 5.0 \
 --lambda_tv 4.0 \
---EMA_decay 0.98 \
---no_EMA
+--niter 50 \
+--niter_decay 70 \
+--continue_train \
+--which_epoch latest

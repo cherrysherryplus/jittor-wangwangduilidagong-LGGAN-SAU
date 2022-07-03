@@ -12,7 +12,6 @@ class TrainOptions(BaseOptions):
         # for displays
         parser.add_argument('--display_freq', type=int, default=200, help='frequency of showing training results on screen')
         parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
-        parser.add_argument('--collect_running_stats_freq', type=int, default=1000, help='frequency of collect running stats of netEMA')
         parser.add_argument('--save_latest_freq', type=int, default=5000, help='frequency of saving the latest results')
         parser.add_argument('--save_epoch_freq', type=int, default=10, help='frequency of saving checkpoints at the end of epochs')
         
@@ -21,7 +20,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--tf_log', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')
 
         # for training
-        parser.add_argument('--continue_train', type=bool, default=False, help='continue training: load the latest model')
+        parser.add_argument('--continue_train', action='store_true', default=False, help='continue training: load the latest model')
         parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         
         parser.add_argument('--niter', type=int, default=70, help='# of iter at starting learning rate. This is NOT the total #epochs. Totla #epochs is niter + niter_decay')
@@ -49,10 +48,6 @@ class TrainOptions(BaseOptions):
         
         parser.add_argument('--gan_mode', type=str, default='hinge', help='(ls|original|hinge)')
         parser.add_argument('--no_TTUR', action='store_true', help='Use TTUR training scheme')
-        
-        # EMA
-        parser.add_argument('--no_EMA', action='store_true', help='if specified, do *not* compute exponential moving averages')
-        parser.add_argument('--EMA_decay', type=float, default=0.9999, help='decay in exponential moving averages')
         
         self.isTrain = True
         return parser

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 # --------------------------------------------------------------------------#
 
 class fid_jittor():
-    def __init__(self, opt, dataloader_val):
+    def __init__(self, opt, dataloader_val, best_fid=99999999):
         self.opt = opt
         self.dims = 2048
         block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[self.dims]
@@ -23,7 +23,7 @@ class fid_jittor():
         self.model_inc = InceptionV3(output_blocks=[block_idx], use_fid_inception=False)
         self.val_dataloader = dataloader_val
         self.m1, self.s1 = self.compute_statistics_of_val_path(dataloader_val)
-        self.best_fid = 99999999
+        self.best_fid = best_fid
         self.path_to_save = os.path.join(self.opt.checkpoints_dir, "FID")
         # if Path(self.path_to_save).exists():
         #     shutil.rmtree(self.path_to_save)
@@ -47,19 +47,14 @@ class fid_jittor():
                 pool += [pool_val]
         return jt.concat(pool, 0)
 
-    def compute_fid_with_valid_path(self, netG, netEMA):
+    def compute_fid_with_valid_path(self, netG):
         pool, logits, labels = [], [], []
         self.model_inc.eval()
         netG.eval()
-        if not self.opt.no_EMA:
-            netEMA.eval()
         with jt.no_grad():
             for i, data_i in enumerate(self.val_dataloader):
                 label = util.preprocess_input(data_i)
-                if self.opt.no_EMA:
-                    generated = netG(label)[0]
-                else:
-                    generated = netEMA(label)[0]
+                generated = netG(label)[0]
                 generated = (generated + 1) / 2
                 pool_val = self.model_inc(generated.float32())[0][:, :, 0, 0]
                 pool += [pool_val]
@@ -67,8 +62,6 @@ class fid_jittor():
             mu, sigma = jt.mean(pool, 0), jittor_cov(pool, rowvar=False)
             answer = self.numpy_calculate_frechet_distance(self.m1, self.s1, mu, sigma)
         netG.train()
-        if not self.opt.no_EMA:
-            netEMA.train()
         return answer
 
     def numpy_calculate_frechet_distance(self, mu1, sigma1, mu2, sigma2, eps=1e-6):
@@ -130,7 +123,7 @@ class fid_jittor():
 
     def update(self, model, cur_iter):
         print("--- Iter %s: computing FID ---" % (cur_iter))
-        cur_fid = self.compute_fid_with_valid_path(model.netG, model.netEMA)
+        cur_fid = self.compute_fid_with_valid_path(model.netG)
         self.update_logs(cur_fid, cur_iter)
         print("--- FID at Iter %s: " % cur_iter, "{:.2f}".format(cur_fid))
         if cur_fid < self.best_fid:

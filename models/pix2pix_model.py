@@ -20,7 +20,7 @@ class Pix2PixModel(jt.nn.Module):
         super().__init__()
         self.opt = opt
 
-        self.netG, self.netD, self.netE, self.netEMA = self.initialize_networks(opt)
+        self.netG, self.netD, self.netE = self.initialize_networks(opt)
 
         # set loss functions
         if opt.isTrain:
@@ -99,8 +99,6 @@ class Pix2PixModel(jt.nn.Module):
     def save(self, epoch):
         util.save_network(self.netG, 'G', epoch, self.opt)
         util.save_network(self.netD, 'D', epoch, self.opt)
-        if not self.opt.no_EMA:
-            util.save_network(self.netEMA, 'EMA', epoch, self.opt)
         if self.opt.use_vae:
             util.save_network(self.netE, 'E', epoch, self.opt)
 
@@ -112,26 +110,15 @@ class Pix2PixModel(jt.nn.Module):
         netG = networks.define_G(opt)
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
-        #--- EMA of generator weights ---
-        with jt.no_grad():
-            netEMA = copy.deepcopy(netG) if not opt.no_EMA else None
 
         if not opt.isTrain or opt.continue_train:
-            if not opt.isTrain:
-                if self.opt.no_EMA:
-                    netG = util.load_network(netG, 'G', opt.which_epoch, opt)
-                else:
-                    netEMA = util.load_network(netEMA, 'EMA', opt.which_epoch, opt)
-            else:
-                netG = util.load_network(netG, 'G', opt.which_epoch, opt)
-                if not opt.not_EMA:
-                    netEMA = util.load_network(netEMA, 'EMA', opt.which_epoch, opt)
+            netG = util.load_network(netG, 'G', opt.which_epoch, opt)
             if opt.isTrain:
                 netD = util.load_network(netD, 'D', opt.which_epoch, opt)
             if opt.use_vae:
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
 
-        return netG, netD, netE, netEMA
+        return netG, netD, netE
         
 
     # preprocess the input, such as moving the tensors to GPUs and
@@ -313,7 +300,7 @@ class Pix2PixModel(jt.nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
-    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False, mode="train"):
+    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
         z = None
         KLD_loss = None
         if self.opt.use_vae:
@@ -328,10 +315,7 @@ class Pix2PixModel(jt.nn.Module):
         result_14 , result_15 , result_16 , result_17, result_18 , result_19 , result_20, result_21 , result_22 , result_23 , result_24 , result_25 , result_26, \
         result_27 , result_28, \
         feature_score, target, index, \
-        attention_global, attention_local = \
-            self.netG(input_semantics, z=z) if mode=="train" \
-            else \
-            self.netEMA(input_semantics, z=z)
+        attention_global, attention_local = self.netG(input_semantics, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"
