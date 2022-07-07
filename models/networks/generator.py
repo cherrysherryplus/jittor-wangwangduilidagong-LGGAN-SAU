@@ -254,8 +254,6 @@ class LGGANGenerator(BaseNetwork):
             globals()['label_3_' + str(i)] = label[:, i:i + 1, :, :].repeat(1, 3, 1, 1)
             globals()['label_64_' + str(i)] = label[:, i:i + 1, :, :].repeat(1, 64, 1, 1)
 
-
-
         x = self.resnet_blocks1(x_encode) # print(x.size()) [1 ,256, 64, 128]
         x = self.resnet_blocks2(x)
         x = self.resnet_blocks3(x)

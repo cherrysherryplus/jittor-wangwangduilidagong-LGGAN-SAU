@@ -99,12 +99,10 @@ class SpectralNorm:
         delattr(module, self.name + '_u')
         delattr(module, self.name + '_v')
         delattr(module, self.name + '_orig')
-        # module.register_parameter(self.name, jittor.Var(weight.detach()))
         setattr(module, self.name, jittor.Var(weight.detach()))
 
     def __call__(self, module: Module, inputs: Any) -> None:
-        self.compute_weight(module, do_power_iteration=module.is_training())
-        # setattr(module, self.name, self.compute_weight(module, do_power_iteration=module.training))
+        getattr(module, self.name).assign(self.compute_weight(module, do_power_iteration=module.is_train))
 
     def _solve_v_and_rescale(self, weight_mat, u, target_sigma):
         # Tries to returns a vector `v` s.t. `u = normalize(W @ v)`
