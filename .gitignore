@@ -163,5 +163,6 @@ cython_debug/
 datasets/*
 !datasets/*.ipynb
 checkpoints/*
+checkpoints_256/*
 results/*
 !.gitkeep

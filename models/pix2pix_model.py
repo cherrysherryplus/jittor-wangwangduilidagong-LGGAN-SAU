@@ -68,7 +68,7 @@ class Pix2PixModel(jt.nn.Module):
                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
                label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28, result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
                result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
-               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , feature_score, target, index,  attention_global, attention_local, _ = self.generate_fake(input_semantics, real_image, mode=mode)
+               result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 , feature_score, target, index,  attention_global, attention_local, _ = self.generate_fake(input_semantics, real_image)
             return fake_image, result_global, result_local, label_3_0, label_3_1, label_3_2, label_3_3, label_3_4, label_3_5, label_3_6, label_3_7, label_3_8, \
                label_3_9, label_3_10, label_3_11, label_3_12, label_3_13, label_3_14, label_3_15, label_3_16, label_3_17, label_3_18, label_3_19, label_3_20, \
                label_3_21,label_3_22, label_3_23, label_3_24, label_3_25, label_3_26, label_3_27, label_3_28,  result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \

@@ -5,8 +5,6 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 
 import jittor.models as model
 import jittor.nn as nn
-# import torch.nn.functional as F
-# import torchvision
 import models.networks.spectral_norm as sp
 from models.networks.normalization import SPADE
 
