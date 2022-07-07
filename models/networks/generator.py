@@ -399,19 +399,10 @@ class LGGANGenerator(BaseNetwork):
         result_27 = jt.tanh(self.deconv5_27(feature_27))
         result_28 = jt.tanh(self.deconv5_28(feature_28))
 
-        # result_local = result_0 + result_1 + result_2 + result_3 + result_4 + result_5 + result_6 + result_7 + result_8 + result_9 + result_10 + \
-        #         result_11 + result_12 + result_13 + result_14 + result_15 + result_16 + result_17 + result_18 + result_19 + result_20 + \
-        #         result_21 + result_22 + result_23 + result_24 + result_25 + result_26 + result_27 + result_28 + result_29 + result_30 + \
-        #                result_31 + result_32 + result_33 + result_34
-
         combine_local = jt.concat((result_0, result_1, result_2, result_3, result_4,result_5 ,result_6 ,result_7 , result_8 , result_9 , result_10 , \
                                    result_11 ,result_12 , result_13 , result_14 , result_15 , result_16 , result_17 , result_18 , result_19 , result_20, \
                                    result_21 , result_22 , result_23 , result_24 , result_25 , result_26 , result_27 , result_28 ), 1)
         result_local = jt.tanh(self.deconv9(combine_local))
-
-        # print(result_local.size()) [1, 3, 262, 518]（此处应该是[1,3,256,512]，要与result_global保持一致）
-        # print(result_global.size()) [1, 3, 256, 512]
-        # final = (result_global + result_local) * 0.5
 
         # x_encode [1 ,256, 64, 128]
         x_attention = nn.relu(self.deconv3_norm_attention(self.deconv3_attention(x_encode)))
