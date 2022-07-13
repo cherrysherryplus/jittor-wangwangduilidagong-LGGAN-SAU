@@ -151,7 +151,7 @@ def save_image(image_numpy, image_path, create_dir=False):
     if image_numpy.shape[2] == 1:
         image_numpy = np.repeat(image_numpy, 3, 2)
     image_pil = Image.fromarray(image_numpy)
-    image_pil.resize((512,384),Image.BICUBIC)
+    image_pil.resize((256,192),Image.BICUBIC)
 
     # save to png
     image_pil.save(image_path.replace('.png', '.jpg'))

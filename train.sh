@@ -1,14 +1,14 @@
 python train.py \
---nThreads 4 \
---batchSize 1 \
+--nThreads 10 \
+--batchSize 5 \
 --use_sau \
---lambda_feat 8.0 \
+--lambda_feat 10.0 \
 --lambda_vgg 5.0 \
---lambda_l1 2.0 \
---lambda_class 6.0 \
---lambda_tv 3.0 \
---lr 0.0004 \
---niter 50 \
---niter_decay 70 \
+--lambda_l1 1.0 \
+--lambda_class 5.0 \
+--lambda_tv 1.0 \
+--lr 0.0002 \
+--niter 70 \
+--niter_decay 50 \
 --continue_train \
 --which_epoch latest

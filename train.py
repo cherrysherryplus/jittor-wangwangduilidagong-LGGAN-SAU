@@ -60,7 +60,6 @@ if opt.continue_train:
         print(f'Could not load best fid record at {txt_path}')
 fid_test = fid_jittor(opt, data_val, best_fid)
 
-
 # create trainer for our model
 trainer = Pix2PixTrainer(opt)
 
@@ -72,6 +71,11 @@ visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
+    
+    # update lr if continue_train
+    if opt.isTrain and opt.continue_train:
+        trainer.update_learning_rate(epoch)
+
     for i, data_i in enumerate(dataloader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
 

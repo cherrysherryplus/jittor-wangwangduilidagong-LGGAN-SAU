@@ -373,7 +373,7 @@ class Pix2PixModel(jt.nn.Module):
     def reparameterize(self, mu, logvar):
         std = jt.exp(0.5 * logvar)
         eps = jt.randn_like(std)
-        return eps.mul(std) + mu
+        return eps.multiply(std) + mu
 
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0

@@ -33,9 +33,9 @@ class FidDataset(Dataset):
         label_paths, img_paths = self.labels, self.imgs
         labels = Image.open(label_paths[index])
         imgs = Image.open(img_paths[index])
-        labels = TF.resize(labels, size=(384,512), interpolation=Image.NEAREST)
+        labels = TF.resize(labels, size=(192,256), interpolation=Image.NEAREST)
         labels = TF.to_tensor(labels)
-        imgs = TF.resize(imgs, size=(384,512), interpolation=Image.BICUBIC)
+        imgs = TF.resize(imgs, size=(192,256), interpolation=Image.BICUBIC)
         imgs = TF.to_tensor(imgs)
         return {'label': labels,'image': imgs}
 
