@@ -143,7 +143,7 @@ def tensor2label(label_tensor, n_label, imtype=np.uint8, tile=False):
     return result
 
 
-def save_image(image_numpy, image_path, create_dir=False):
+def save_image(image_numpy, image_path, create_dir=False, save_w=256, save_h=192):
     if create_dir:
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
     if len(image_numpy.shape) == 2:
@@ -151,9 +151,12 @@ def save_image(image_numpy, image_path, create_dir=False):
     if image_numpy.shape[2] == 1:
         image_numpy = np.repeat(image_numpy, 3, 2)
     image_pil = Image.fromarray(image_numpy)
-    image_pil.resize((512,384),Image.BICUBIC)
 
-    # save to png
+    orig_w, orig_h = image_pil.size
+    if orig_w != save_w:
+        image_pil = image_pil.resize((save_w, save_h),Image.BICUBIC)
+
+    # save to jpg
     image_pil.save(image_path.replace('.png', '.jpg'))
 
 
@@ -215,8 +218,6 @@ def save_network(net, label, epoch, opt):
     save_filename = '%s_net_%s.pkl' % (epoch, label)
     save_path = os.path.join(opt.checkpoints_dir, opt.name, save_filename)
     jt.save(net.state_dict(), save_path)
-    # if len(opt.gpu_ids) and jt.cuda.is_available():
-    #     net.cuda()
 
 
 def load_network(net, label, epoch, opt):

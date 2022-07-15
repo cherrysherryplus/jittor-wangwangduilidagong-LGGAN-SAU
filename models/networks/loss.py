@@ -3,10 +3,8 @@ Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
 Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 """
 
-# import torch
 import jittor as jt
 import jittor.nn as nn
-# import jittor.functi as F
 from models.networks.architecture import VGG19
 
 
@@ -117,5 +115,23 @@ class VGGLoss(nn.Module):
 
 # KL Divergence loss used in VAE with an image encoder
 class KLDLoss(nn.Module):
-    def forward(self, mu, logvar):
+    def execute(self, mu, logvar):
         return -0.5 * jt.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+
+class TVLoss(nn.Module):
+    def __init__(self):
+        super(TVLoss,self).__init__()
+
+    def execute(self, x):
+        b,_,h,w = x.shape
+        count_h = self._tensor_size(x[:,:,1:,:])
+        count_w = self._tensor_size(x[:,:,:,1:])
+        h_tv = jt.pow((x[:,:,1:,:]-x[:,:,:h-1,:]),2).sum()
+        w_tv = jt.pow((x[:,:,:,1:]-x[:,:,:,:w-1]),2).sum()
+        return 2 * (h_tv/count_h + w_tv/count_w) / b
+
+    def _tensor_size(self, t):
+        _,c,h,w = t.shape
+        return c*h*w
+        

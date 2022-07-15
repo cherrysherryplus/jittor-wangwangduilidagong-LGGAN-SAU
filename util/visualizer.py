@@ -5,6 +5,7 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 
 import os
 import ntpath
+from shutil import rmtree
 import time
 from . import util
 from . import html
@@ -25,7 +26,7 @@ class Visualizer():
             import tensorflow as tf
             self.tf = tf
             self.log_dir = os.path.join(opt.checkpoints_dir, opt.name, 'logs')
-            self.writer = tf.summary.FileWriter(self.log_dir)
+            self.writer = tf.summary.create_file_writer(self.log_dir)
 
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
@@ -136,7 +137,7 @@ class Visualizer():
         return visuals
 
     # save image to the disk
-    def save_images(self, webpage, visuals, image_path):        
+    def save_images(self, webpage, visuals, image_path, save_w=256, save_h=192):        
         visuals = self.convert_visuals_to_numpy(visuals)        
         
         image_dir = webpage.get_image_dir()
@@ -151,9 +152,20 @@ class Visualizer():
         for label, image_numpy in visuals.items():
             image_name = os.path.join(label, '%s.png' % (name))
             save_path = os.path.join(image_dir, image_name)
-            util.save_image(image_numpy, save_path, create_dir=True)
+            util.save_image(image_numpy, save_path, create_dir=True, save_w=save_w, save_h=save_h)
 
             ims.append(image_name)
             txts.append(label)
             links.append(image_name)
         webpage.add_images(ims, txts, links, width=self.win_size)
+
+    def save_images_for_test(self, visuals, image_dir, image_path, save_w=256, save_h=192):
+        visuals = self.convert_visuals_to_numpy(visuals)
+        
+        short_path = ntpath.basename(image_path[0])
+        name = os.path.splitext(short_path)[0]
+
+        for label, image_numpy in visuals.items():
+            image_name = '%s.png' % name
+            save_path = os.path.join(image_dir, image_name)
+            util.save_image(image_numpy, save_path, create_dir=False, save_w=save_w, save_h=save_h)

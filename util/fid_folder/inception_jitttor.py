@@ -7,9 +7,6 @@ from jittor import load
 
 
 # 非官方预训练或非ImageNet预训练模型不能使用，不确定下述FID_WEIGHTS_URL是否满足要求，所以使用jittor官方的
-# Inception weights ported to Pytorch from
-# http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
-# FID_WEIGHTS_URL = 'https://github.com/mseitzer/pytorch-fid/releases/download/fid_weights/pt_inception-2015-12-05-6726825d.pth'
 FID_WEIGHTS_URL = 'jittorhub://inception_v3.pkl'
 
 class InceptionV3(nn.Module):

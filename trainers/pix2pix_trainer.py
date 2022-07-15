@@ -3,6 +3,7 @@ Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
 Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 """
 
+import jittor as jt
 from models.pix2pix_model import Pix2PixModel
 
 
@@ -171,6 +172,7 @@ class Pix2PixTrainer():
     def update_learning_rate(self, epoch):
         if epoch > self.opt.niter:
             lrd = self.opt.lr / self.opt.niter_decay
+            # new_lr = self.old_lr - lrd*(epoch-self.opt.niter)
             new_lr = self.old_lr - lrd
         else:
             new_lr = self.old_lr
@@ -189,3 +191,4 @@ class Pix2PixTrainer():
                 param_group['lr'] = new_lr_G
             print('update learning rate: %f -> %f' % (self.old_lr, new_lr))
             self.old_lr = new_lr
+

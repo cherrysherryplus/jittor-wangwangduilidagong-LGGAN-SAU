@@ -1,10 +1,8 @@
-"""
-Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
-Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
-"""
-
 import sys
+import numpy as np
+import jittor as jt
 from collections import OrderedDict
+
 from options.train_options import TrainOptions
 import data
 from data import FID_val
@@ -13,20 +11,13 @@ from util.visualizer import Visualizer
 from util.fid_scores import fid_jittor
 from util.util import fix_seed, start_grad, stop_grad
 from trainers.pix2pix_trainer import Pix2PixTrainer
-import jittor as jt
+
 
 # parse options
 opt = TrainOptions().parse()
 
 # global seed
 fix_seed(seed = 628)
-
-# debug
-# opt.use_sau = True
-# jt.flags.lazy_execution = 0
-
-# opt.continue_train = True   # if continue train
-
 jt.flags.use_cuda = (jt.has_cuda and opt.gpu_ids != "-1")
 # print options to help debugging
 print(' '.join(sys.argv))
@@ -38,25 +29,44 @@ dataloader = dataset().set_attrs(batch_size=opt.batchSize,
         num_workers=int(opt.nThreads),
         drop_last=opt.isTrain)
 dataloader.initialize(opt)
-print("the Dataset is contain %d labels" %(len(dataloader)))
+print("the Dataset contains %d labels" %(len(dataloader)))
+
 
 # load FID val dataset
-
-data_val = FID_val.FidDataset().set_attrs(batch_size=opt.batchSize, drop_last=False)
+data_val = FID_val.FidDataset(opt).set_attrs(batch_size=opt.batchSize, drop_last=False)
 # data_val.initialize(opt)
-fid_test = fid_jittor(opt, data_val)
+
+# if continue train, load best fid
+best_fid = 99999999
+if opt.isTrain and opt.continue_train:
+    txt_path = f"checkpoints/{opt.name}/best_iter.txt"
+    try:
+        best_epoch, best_iter, best_fid = np.loadtxt(txt_path, delimiter=',', dtype=int)
+        print('Load cur_fid (approx: %d) from epoch %d at iteration %d' % (best_fid, best_epoch, best_iter))
+    except:
+        print(f'Could not load best fid record at {txt_path}')
+fid_test = fid_jittor(opt, data_val, best_fid)
+
 
 # create trainer for our model
 trainer = Pix2PixTrainer(opt)
 
+
 # create tool for counting iterations
 iter_counter = IterationCounter(opt, len(dataloader))
+
 
 # create tool for visualization
 visualizer = Visualizer(opt)
 
+
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
+    
+    # update lr if continue_train
+    if opt.isTrain and opt.continue_train:
+        trainer.update_learning_rate(epoch)
+
     for i, data_i in enumerate(dataloader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
 
@@ -87,31 +97,47 @@ for epoch in iter_counter.training_epochs():
                                    ('global_attention', trainer.get_global_attention()),
                                    ('local_attention', trainer.get_local_attention()),
                                    ('real_image', data_i['image'])])
+
             visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_saving():
-            is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+            is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
             if is_better:
-                print(f"find currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
-                print('saving the latest model (epoch %d, total_steps %d)' %
-                    (epoch, iter_counter.total_steps_so_far))
-                trainer.save('latest')
-                iter_counter.record_current_iter()
+                print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+                trainer.save('best')
+                iter_counter.record_best_iter(cur_fid)
+            print('saving the latest model (epoch %d, total_steps %d)' % (epoch, iter_counter.total_steps_so_far))
+            trainer.save('latest')
+            iter_counter.record_current_iter()
 
     trainer.update_learning_rate(epoch)
     iter_counter.record_epoch_end()
 
-    if epoch % opt.save_epoch_freq == 0 or \
-       epoch == iter_counter.total_epochs:
-        is_better = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+    if epoch % opt.save_epoch_freq == 0 or epoch == iter_counter.total_epochs:
+        is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
         if is_better:
-            print('saving the model at the end of epoch %d, iters %d' %
-                (epoch, iter_counter.total_steps_so_far))
-            trainer.save('latest')
+            print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+            trainer.save('best')
+            iter_counter.record_best_iter(cur_fid)
+        print('saving the model at the end of epoch %d, iters %d' % (epoch, iter_counter.total_steps_so_far))
+        trainer.save('latest')
         trainer.save(epoch)
     
     jt.sync_all()
     jt.gc()
     
 
+# after training
+is_better, cur_fid = fid_test.update(trainer.pix2pix_model, iter_counter.total_steps_so_far)
+if is_better:
+    print(f"saving the currently best model epoch={epoch}, step={iter_counter.total_steps_so_far}")
+    trainer.save('best')
+    iter_counter.record_best_iter(cur_fid)
+print('saving the model at the end of epoch %d, iters %d' % (epoch, iter_counter.total_steps_so_far))
+trainer.save('latest')
+trainer.save(epoch)
+
+
+# training end
 print('Training was successfully finished.')
+

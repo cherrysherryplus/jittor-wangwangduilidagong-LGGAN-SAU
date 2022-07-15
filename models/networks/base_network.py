@@ -5,7 +5,6 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 
 import jittor.nn as nn
 from jittor import init
-# from torch.nn import init
 
 
 class BaseNetwork(nn.Module):

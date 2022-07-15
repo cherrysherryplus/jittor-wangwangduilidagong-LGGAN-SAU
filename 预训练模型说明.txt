@@ -1,0 +1,12 @@
+1. models/networks/architecture.py
+使用了jittor.models提供的 VGG19 预训练模型
+代码链接：https://github.com/Jittor/jittor/blob/master/python/jittor/models/vgg.py
+参数链接：jittorhub://vgg19.pkl
+训练数据：ImageNet
+
+
+2. util/fid_folder/inception_jittor.py
+使用了jittor.models提供的 InceptionV3 预训练模型
+代码链接：https://github.com/Jittor/jittor/blob/master/python/jittor/models/inception.py
+参数链接：jittorhub://inception_v3.pkl
+训练数据：ImageNet

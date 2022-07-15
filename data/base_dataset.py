@@ -26,6 +26,7 @@ def get_params(opt, size):
     w, h = size
     new_h = h
     new_w = w
+
     if opt.preprocess_mode == 'resize_and_crop':
         new_h = opt.load_h
         new_w = opt.load_size
@@ -75,6 +76,7 @@ def get_transform(opt, params, method=Image.BICUBIC, normalize=True, toTensor=Tr
 
     if normalize:
         transform_list += [transforms.ImageNormalize(mean=[0.5], std= [0.5])]
+
     return transforms.Compose(transform_list)
 
 
@@ -128,3 +130,4 @@ def __flip(img, flip):
     if flip:
         return img.transpose(Image.FLIP_LEFT_RIGHT)
     return img
+

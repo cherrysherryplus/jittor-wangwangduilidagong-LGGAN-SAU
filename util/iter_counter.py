@@ -18,6 +18,7 @@ class IterationCounter():
         self.total_epochs = opt.niter + opt.niter_decay
         self.epoch_iter = 0  # iter number within each epoch
         self.iter_record_path = os.path.join(self.opt.checkpoints_dir, self.opt.name, 'iter.txt')
+        self.best_iter_record_path = os.path.join(self.opt.checkpoints_dir, self.opt.name, 'best_iter.txt')
         if opt.isTrain and opt.continue_train:
             try:
                 self.first_epoch, self.epoch_iter = np.loadtxt(
@@ -64,11 +65,16 @@ class IterationCounter():
                    delimiter=',', fmt='%d')
         print('Saved current iteration count at %s.' % self.iter_record_path)
 
+    def record_best_iter(self, fid_score):
+        np.savetxt(self.best_iter_record_path, (self.current_epoch, self.epoch_iter, fid_score),
+                   delimiter=',', fmt='%d')
+        print('Saved best iteration count at %s.' % self.best_iter_record_path)
+
     def needs_saving(self):
-        return (self.total_steps_so_far % self.opt.save_latest_freq) < self.opt.batchSize
+        return self.total_steps_so_far % self.opt.save_latest_freq == 0
 
     def needs_printing(self):
-        return (self.total_steps_so_far % self.opt.print_freq) < self.opt.batchSize
+        return self.total_steps_so_far % self.opt.print_freq == 0
 
     def needs_displaying(self):
-        return (self.total_steps_so_far % self.opt.display_freq) < self.opt.batchSize
+        return self.total_steps_so_far % self.opt.display_freq == 0
