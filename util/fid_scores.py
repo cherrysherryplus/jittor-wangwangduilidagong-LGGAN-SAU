@@ -1,3 +1,6 @@
+# --------------------------------------------------------------------------#
+# This code is an jittor version of https://github.com/mseitzer/pytorch-fid
+# --------------------------------------------------------------------------#
 import os
 import shutil
 import numpy as np
@@ -10,9 +13,6 @@ import util
 from util.fid_folder.inception_jitttor import InceptionV3
 import matplotlib.pyplot as plt
 
-# --------------------------------------------------------------------------#
-# This code is an adapted version of https://github.com/mseitzer/pytorch-fid
-# --------------------------------------------------------------------------#
 
 class fid_jittor():
     def __init__(self, opt, dataloader_val, best_fid=99999999):

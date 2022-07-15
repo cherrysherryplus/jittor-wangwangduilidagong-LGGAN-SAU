@@ -44,7 +44,15 @@ class LGGANGenerator(BaseNetwork):
         self.opt = opt
         nf = opt.ngf  # of gen filters in first conv layer
 
-        self.sw, self.sh = self.compute_latent_vector_size(opt)
+        if opt.phase == "train":
+            self.sw, self.sh = self.compute_latent_vector_size(opt)
+        else:
+            # no-op
+            if opt.dataset_mode == "custom":
+                self.sw, self.sh = self.compute_latent_vector_size(opt, seg_size=256, seg_h=192)
+            else:
+                self.sw, self.sh = self.compute_latent_vector_size(opt, seg_size=256, seg_h=192)
+            
         # print(self.sw, self.sh) 8, 4
 
         if opt.use_vae:  # False
@@ -180,7 +188,7 @@ class LGGANGenerator(BaseNetwork):
             self.deconv4_norm_attention = nn.InstanceNorm2d(64, affine=False)
         self.deconv5_attention = nn.Conv2d(64, 2, 1, 1, 0)
 
-    def compute_latent_vector_size(self, opt):
+    def compute_latent_vector_size(self, opt, seg_size=None, seg_h=None):
         if opt.num_upsampling_layers == 'normal':
             num_up_layers = 5
         elif opt.num_upsampling_layers == 'more':
@@ -191,9 +199,12 @@ class LGGANGenerator(BaseNetwork):
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)
 
-        sw = opt.crop_size // (2 ** num_up_layers)
-        sh = opt.crop_h // (2 ** num_up_layers)
-
+        if seg_size is None:
+            sw = opt.crop_size // (2 ** num_up_layers)
+            sh = opt.crop_h // (2 ** num_up_layers)
+        else:
+            sw = seg_size // (2 ** num_up_layers)
+            sh = seg_h // (2 ** num_up_layers)
         return sw, sh
 
     def execute(self, input, z=None):

@@ -9,6 +9,8 @@ from .base_options import BaseOptions
 class TrainOptions(BaseOptions):
     def initialize(self, parser):
         BaseOptions.initialize(self, parser)
+        # 输入路径
+        parser.add_argument('--input_path', type=str, default='./datasets/landscape/train', help="输入label路径")
         # for displays
         parser.add_argument('--display_freq', type=int, default=200, help='frequency of showing training results on screen')
         parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
@@ -48,6 +50,13 @@ class TrainOptions(BaseOptions):
         
         parser.add_argument('--gan_mode', type=str, default='hinge', help='(ls|original|hinge)')
         parser.add_argument('--no_TTUR', action='store_true', help='Use TTUR training scheme')
+
+        # train set defaults
+        parser.set_defaults(nThreads=4)
+        parser.set_defaults(batchSize=2)
+        parser.set_defaults(use_sau=True)
+        parser.set_defaults(niter=50)
+        parser.set_defaults(niter_decay=70)
         
         self.isTrain = True
         return parser

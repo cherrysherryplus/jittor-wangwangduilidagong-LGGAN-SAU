@@ -6,6 +6,8 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 from data.pix2pix_dataset import Pix2pixDataset
 from data.image_folder import make_dataset
 
+import os.path as osp
+
 
 class CustomDataset(Pix2pixDataset):
     """ Dataset that loads images from directories
@@ -21,20 +23,22 @@ class CustomDataset(Pix2pixDataset):
         load_size = 256 if is_train else 256
         parser.set_defaults(load_size=load_size)
         parser.set_defaults(load_h=192)
-        # crop_size = 256 if is_train else 512
         parser.set_defaults(crop_size=256)
         parser.set_defaults(crop_h=192)
         parser.set_defaults(display_winsize=256)
         parser.set_defaults(label_nc=29)
         parser.set_defaults(contain_dontcare_label=False)
+
         if is_train:
-            label_dir = './datasets/landscape/train/labels'
+            label_dir = osp.join("./datasets/landscape", "labels")
         else:
-            label_dir = './datasets/landscape/testB/labels'
+            # test的input_path直接就是./testB/labels
+            label_dir = "./datasets/landscape/testB/labels"
         parser.add_argument('--label_dir', type=str, default=label_dir,
                             help='path to the directory that contains label images')
         if is_train:
-            parser.add_argument('--image_dir', type=str, default='./datasets/landscape/train/imgs',
+            image_dir = osp.join("./datasets/landscape", "imgs")
+            parser.add_argument('--image_dir', type=str, default=image_dir ,
                                 help='path to the directory that contains photo images')
         else:
             parser.add_argument('--image_dir', type=str, default=label_dir,
@@ -44,10 +48,13 @@ class CustomDataset(Pix2pixDataset):
         return parser
 
     def get_paths(self, opt):
-        label_dir = opt.label_dir
+        input_path = opt.input_path
+        if opt.phase == "train":
+            label_dir = osp.join(input_path, "labels")
+            image_dir = osp.join(input_path, "imgs")
+        elif opt.phase == "test":
+            label_dir = image_dir = input_path
         label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
-
-        image_dir = opt.image_dir
         image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
 
         if len(opt.instance_dir) > 0:

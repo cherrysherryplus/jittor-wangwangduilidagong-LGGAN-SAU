@@ -130,7 +130,8 @@ class Pix2PixModel(jt.nn.Module):
         data['label'] = data['label'].long()
         if self.use_gpu():
             data['label'] = data['label']
-            data['instance'] = data['instance']
+            # assign None
+            data['instance'] = None
             data['image'] = data['image']
 
         # create one-hot label map

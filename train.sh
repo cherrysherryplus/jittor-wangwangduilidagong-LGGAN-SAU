@@ -1,14 +1,7 @@
 python train.py \
---nThreads 10 \
---batchSize 5 \
---use_sau \
---lambda_feat 10.0 \
---lambda_vgg 5.0 \
---lambda_l1 1.0 \
+--input_path ./datasets/landscape/train \
+--lambda_feat 8.0 \
+--lambda_vgg 3.0 \
+--lambda_l1 2.0 \
 --lambda_class 5.0 \
---lambda_tv 1.0 \
---lr 0.0002 \
---niter 70 \
---niter_decay 50 \
---continue_train \
---which_epoch latest
+--lambda_tv 4.0
