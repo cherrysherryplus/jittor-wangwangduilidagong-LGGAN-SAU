@@ -1,4 +1,8 @@
-import common as common
+import os
+if os.path.basename( os.path.abspath( os.curdir ) ) == "RCAN":
+    import common as common
+else:
+    import RCAN.common as common
 import jittor.nn as nn
 import jittor as jt
 
