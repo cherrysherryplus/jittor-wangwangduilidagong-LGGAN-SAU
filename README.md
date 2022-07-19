@@ -33,8 +33,9 @@
 
 #### 安装依赖
 执行以下命令安装 python 依赖
-```
-pip install -r requirements.txt
+```bash
+# <env>为虚拟环境名称
+conda create --name <env> --file requirements.txt
 ```
 
 #### 预训练模型存放位置 目录结构
