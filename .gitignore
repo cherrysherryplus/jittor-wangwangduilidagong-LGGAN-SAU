@@ -165,8 +165,8 @@ datasets/*
 !datasets/get_dataset_stat.py
 checkpoints/*
 checkpoints_256/*
-results/*
-result/*
+result*/*
+*.zip
 **/tf-log/*
 *.pkl
 !.gitkeep

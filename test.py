@@ -2,7 +2,6 @@
 Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
 Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 """
-from pyexpat import model
 import jittor as jt
 import PIL.Image as Image
 
@@ -22,7 +21,8 @@ def label_to_image(opt):
     # dataset
     import data
     dataset = data.create_dataloader(opt)
-    dataloader_generate = dataset().set_attrs(batch_size=4,
+    # 训练batch为2，测试最好也为2
+    dataloader_generate = dataset().set_attrs(batch_size=2,
                                     shuffle=not opt.serial_batches,
                                     num_workers=int(opt.nThreads),
                                     drop_last=opt.isTrain)
@@ -98,14 +98,18 @@ def rescale_image(opt):
         model_sr = RCAN()
         state_dict = jt.load("./RCAN/best.pkl")
         model_sr.load_state_dict( state_dict["model"] )
+        model_sr.eval()
         stop_grad(model_sr)
+        
         # dataset init
         LR_folder = str(tmp_image_dir_path.absolute())
         sr_dataset = SRTestDataset(LR_folder)
-        sr_dataset.set_attrs(batch_size=1, 
+        # 训练batch为32，测试最好也为32
+        sr_dataset.set_attrs(batch_size=32, 
                              shuffle=False, 
                              drop_last=False, 
                              num_workers=int(opt.nThreads))
+        
         # iter over sr dataset
         with jt.no_grad():
             for lr,filename in tqdm(sr_dataset):
@@ -116,6 +120,7 @@ def rescale_image(opt):
                     # chw -> hwc
                     hr_pil = Image.fromarray( hr[i].numpy().transpose((1, 2, 0) ))
                     hr_pil.save( image_dir_path / filename[i] )
+                    
         # clean
         jt.sync_all(True)
         jt.clean_graph()
